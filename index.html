@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tu Profe 20 Lab - Números Decimales</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- KaTeX para rendering matemático exacto -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+        
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; overflow: hidden; width: 100vw; height: 100dvh; user-select: none; background: #1e1b4b; }
+        .font-fun { font-family: 'Nunito', sans-serif; }
+        
+        @keyframes floatUp { 0% { transform: translateY(105vh) rotate(0deg); } 100% { transform: translateY(-105vh) rotate(360deg); } }
+        @keyframes slideInRight { 0% { opacity: 0; transform: translateX(12px); } 100% { opacity: 1; transform: translateX(0); } }
+        @keyframes confettiExplosion { 0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; } 80% { opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0) rotate(var(--rot)); opacity: 0; } }
+        @keyframes jellyPop {
+            0% { transform: scale3d(.85, .85, .85); opacity: 0; }
+            45% { transform: scale3d(1.04, 1.04, 1.04); opacity: 1; }
+            75% { transform: scale3d(.98, .98, .98); }
+            100% { transform: scale3d(1, 1, 1); opacity: 1; }
+        }
+        @keyframes robotFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes robotJump { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-12px); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .animate-floatUp { animation: floatUp linear infinite; }
+        .animate-slideInRight { animation: slideInRight 0.25s ease-out forwards; }
+        .animate-confettiExplosion { animation: confettiExplosion 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        .animate-jellyPop { animation: jellyPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-robotFloat { animation: robotFloat 2.8s ease-in-out infinite; }
+        .animate-robotJump { animation: robotJump 0.9s cubic-bezier(0.28, 0.84, 0.42, 1) infinite; }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+
+        /* Contenedores KaTeX Responsivos */
+        .katex { font-weight: 900 !important; }
+        .katex-display { margin: 0 !important; padding: 0 !important; overflow-x: auto; overflow-y: hidden; }
+        .math-enunciado .katex { font-size: clamp(1.1rem, 3.5vw, 2.2rem) !important; color: #ffffff !important; }
+        
+        /* Inputs Lab Responsivos */
+        .lab-input {
+            background: #ffffff;
+            border: 4px solid #cbd5e1;
+            border-radius: 1rem;
+            color: #0f172a;
+            text-align: center;
+            font-weight: 900;
+            outline: none;
+            transition: all 0.3s;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.05);
+            /* Prevenir zoom en iOS */
+            font-size: 16px; 
+        }
+        /* Overrides para tamaño de texto visual real */
+        .lab-input-text { font-size: clamp(1.8rem, 5vw, 4rem); }
+        .lab-input-fraction { font-size: clamp(1.5rem, 4vw, 3rem); }
+        
+        .lab-input:focus {
+            border-color: #8b5cf6;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.05), 0 0 0 4px rgba(139, 92, 246, 0.2);
+        }
+        .grid-cell { transition: all 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, memo } = React;
+
+        const Icon = ({ paths, className = "", size = 24, fill = "none", strokeWidth = "2.5" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{__html: paths}} />
+        );
+
+        const VolumeX = (p) => <Icon {...p} paths='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>' />;
+        const Volume2 = (p) => <Icon {...p} paths='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>' />;
+        const Rocket = (p) => <Icon {...p} paths='<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>' />;
+        const Home = (p) => <Icon {...p} paths='<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>' />;
+        const CheckCircle = (p) => <Icon {...p} paths='<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' />;
+
+        const AudioController = {
+            ctx: null, muted: false,
+            init: function() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) this.ctx = new AudioContext();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            },
+            play: function(type) {
+                this.init();
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                
+                if (type === 'pop') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(520, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+                    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+                    osc.start(now); osc.stop(now + 0.09);
+                } else if (type === 'pop-reverse') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(650, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.11);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.11);
+                    osc.start(now); osc.stop(now + 0.11);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+                    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now); osc.stop(now + 0.3);
+                } else if (type === 'success') {
+                    osc.disconnect();
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, i) => {
+                        const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+                        o.type = 'triangle'; o.frequency.value = freq;
+                        o.connect(g); g.connect(this.ctx.destination);
+                        const startTime = now + (i * 0.07);
+                        g.gain.setValueAtTime(0, startTime); g.gain.linearRampToValueAtTime(0.22, startTime + 0.03); g.gain.linearRampToValueAtTime(0, startTime + 0.35);
+                        o.start(startTime); o.stop(startTime + 0.35);
+                    });
+                } else if (type === 'swoosh') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(320, now); osc.frequency.exponentialRampToValueAtTime(90, now + 0.16);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.16);
+                    osc.start(now); osc.stop(now + 0.16);
+                }
+            },
+            toggleMute: function() { this.muted = !this.muted; return this.muted; }
+        };
+
+        const EXERCISES = [
+            {
+                id: 1, title: "Reto 1", subtitle: "Fracción a Decimal", cardBg: "from-[#ff9f1c] to-[#f77f00]",
+                levels: [
+                    { enunciadoText: "Escribe en forma de número decimal:", enunciadoLatex: String.raw`\frac{4}{10} = ?`, type: "input", graphic: { type: "base10", units: 0, tenths: 4, color: "#f59e0b" }, validate: (ans) => ans === "0.4" || ans === "0,4", robotIdle: "Nivel 1: Corremos la coma 1 espacio a la izquierda.", robotSuccess: "¡Excelente! 4 décimos es 0,4.", robotError: "Revisa bien. Un cero abajo es un salto de la coma." },
+                    { enunciadoText: "Escribe en forma de número decimal:", enunciadoLatex: String.raw`\frac{48}{10} = ?`, type: "input", graphic: { type: "base10", units: 4, tenths: 8, color: "#f59e0b" }, validate: (ans) => ans === "4.8" || ans === "4,8", robotIdle: "Nivel 2: Tienes 4 enteros completos y 8 décimos.", robotSuccess: "¡Perfecto! 48 entre 10 es 4,8.", robotError: "Sigue la misma regla: 1 cero = 1 salto a la izquierda." },
+                    { enunciadoText: "Escribe en forma de número decimal:", enunciadoLatex: String.raw`\frac{153}{100} = ?`, type: "input", graphic: null, validate: (ans) => ans === "1.53" || ans === "1,53", robotIdle: "Nivel 3: ¡Ahora hay dos ceros! Da dos saltos a la izquierda.", robotSuccess: "¡Muy bien! 153 centésimos es 1,53.", robotError: "Recuerda, dos ceros abajo significan dos decimales." },
+                    { enunciadoText: "Escribe en forma de número decimal:", enunciadoLatex: String.raw`\frac{875}{10} = ?`, type: "input", graphic: null, validate: (ans) => ans === "87.5" || ans === "87,5", robotIdle: "Nivel 4: Cuidado, es sobre 10, no sobre 100.", robotSuccess: "¡Genial! 875 entre 10 es 87,5.", robotError: "Verifica cuántos ceros tiene el denominador." },
+                    { enunciadoText: "Escribe en forma de número decimal:", enunciadoLatex: String.raw`\frac{2023}{100} = ?`, type: "input", graphic: null, validate: (ans) => ans === "20.23" || ans === "20,23", robotIdle: "Nivel 5 (Maestro): ¡Un número grande! Aplica la regla sin miedo.", robotSuccess: "¡Nivel superado! Dos saltos a la izquierda = 20,23.", robotError: "Mantén la calma. 2 ceros abajo = 2 espacios decimales." }
+                ]
+            },
+            {
+                id: 2, title: "Reto 2", subtitle: "Decimal a Fracción", cardBg: "from-[#06b6d4] to-[#0284c7]",
+                levels: [
+                    { enunciadoText: "Escribe en forma de fracción decimal:", enunciadoLatex: String.raw`0,2 = ?`, type: "fraction-input", graphic: { type: "grid10", filled: 2, color: "#06b6d4" }, validate: (ans) => ans && ans.num === "2" && ans.den === "10", robotIdle: "Nivel 1: Hay 1 decimal (décimos), por lo tanto va un 10 abajo.", robotSuccess: "¡Exacto! 2 sobre 10.", robotError: "Pon el número sin comas arriba y un 1 con ceros abajo." },
+                    { enunciadoText: "Escribe en forma de fracción decimal:", enunciadoLatex: String.raw`0,85 = ?`, type: "fraction-input", graphic: { type: "grid100", filled: 85, color: "#06b6d4" }, validate: (ans) => ans && ans.num === "85" && ans.den === "100", robotIdle: "Nivel 2: Hay 2 decimales (centésimos).", robotSuccess: "¡Perfecto! 85 sobre 100.", robotError: "Dos cifras decimales requieren dos ceros en el denominador." },
+                    { enunciadoText: "Escribe en forma de fracción decimal:", enunciadoLatex: String.raw`8,008 = ?`, type: "fraction-input", graphic: null, validate: (ans) => ans && ans.num === "8008" && ans.den === "1000", robotIdle: "Nivel 3: Escribe todo el número arriba. ¿Cuántos ceros van abajo?", robotSuccess: "¡Súper! Tres decimales = milésimos (1000).", robotError: "Cuenta bien las posiciones después de la coma." },
+                    { enunciadoText: "Escribe en forma de fracción decimal:", enunciadoLatex: String.raw`52,84 = ?`, type: "fraction-input", graphic: null, validate: (ans) => ans && ans.num === "5284" && ans.den === "100", robotIdle: "Nivel 4: Sin importar la parte entera, solo cuenta los decimales.", robotSuccess: "¡Muy bien! Todo el número sobre 100.", robotError: "El denominador solo depende de las cifras a la derecha de la coma." },
+                    { enunciadoText: "Escribe en forma de fracción decimal:", enunciadoLatex: String.raw`0,0006 = ?`, type: "fraction-input", graphic: null, validate: (ans) => ans && ans.num === "6" && ans.den === "10000", robotIdle: "Nivel 5: ¡Muchos ceros! Cuenta bien cada posición.", robotSuccess: "¡Maestría! 4 posiciones decimales = 10000 abajo.", robotError: "Verifica: décimos, centésimos, milésimos, diez milésimos." }
+                ]
+            },
+            {
+                id: 3, title: "Reto 3", subtitle: "Lectura a Número", cardBg: "from-[#f43f5e] to-[#e11d48]",
+                levels: [
+                    { enunciadoText: "Selecciona el número decimal correcto:", enunciadoLatex: String.raw`\text{Ocho décimos}`, type: "choice", options: ["0,8", "0,08", "8,0", "0,008"], validate: (ans) => ans === "0,8", robotIdle: "Nivel 1: Décimos significa 1 posición después de la coma.", robotSuccess: "¡Correcto! 0,8 es un décimo.", robotError: "Revisa la tabla posicional." },
+                    { enunciadoText: "Selecciona el número decimal correcto:", enunciadoLatex: String.raw`\text{Catorce centésimos}`, type: "choice", options: ["0,14", "0,014", "1,4", "14,0"], validate: (ans) => ans === "0,14", robotIdle: "Nivel 2: Centésimos significa 2 posiciones.", robotSuccess: "¡Perfecto! Termina en la segunda posición.", robotError: "Centésimos = 100 = 2 ceros = 2 posiciones decimales." },
+                    { enunciadoText: "Selecciona el número decimal correcto:", enunciadoLatex: String.raw`\text{Trece diez milésimos}`, type: "choice", options: ["0,013", "0,13", "0,0013", "13,000"], validate: (ans) => ans === "0,0013", robotIdle: "Nivel 3: Diez milésimos son 4 posiciones decimales.", robotSuccess: "¡Genial! Hay que rellenar con ceros para llegar a 4 posiciones.", robotError: "Cuenta las posiciones: décimos, centésimos, milésimos, diez milésimos." },
+                    { enunciadoText: "Selecciona el número decimal correcto:", enunciadoLatex: String.raw`\text{Dieciocho millonésimos}`, type: "choice", options: ["0,000018", "0,00018", "0,0000018", "0,0018"], validate: (ans) => ans === "0,000018", robotIdle: "Nivel 4: Millonésimos significa 6 posiciones decimales.", robotSuccess: "¡Impresionante! 6 cifras después de la coma.", robotError: "Asegúrate de que haya exactamente 6 números a la derecha de la coma." },
+                    { enunciadoText: "Selecciona el número decimal correcto:", enunciadoLatex: String.raw`\text{Mil doce cien milésimos}`, type: "choice", options: ["0,01012", "0,001012", "0,1012", "0,0112"], validate: (ans) => ans === "0,01012", robotIdle: "Nivel 5: Cien milésimos son 5 posiciones decimales.", robotSuccess: "¡Reto superado! Has dominado la lectura decimal.", robotError: "El número mil doce (1012) debe terminar en la 5ta posición." }
+                ]
+            },
+            {
+                id: 4, title: "Reto 4", subtitle: "Número a Lectura", cardBg: "from-[#8b5cf6] to-[#6d28d9]",
+                levels: [
+                    { enunciadoText: "¿Cómo se lee el siguiente número?", enunciadoLatex: String.raw`2,5`, type: "choice", options: ["Dos enteros cinco décimos", "Dos enteros cinco centésimos", "Veinticinco décimos"], validate: (ans) => ans === "Dos enteros cinco décimos", robotIdle: "Nivel 1: Fíjate en la parte entera primero.", robotSuccess: "¡Correcto! Termina en la primera posición (décimos).", robotError: "Hay una sola cifra después de la coma." },
+                    { enunciadoText: "¿Cómo se lee el siguiente número?", enunciadoLatex: String.raw`0,082`, type: "choice", options: ["Ochenta y dos décimos", "Ochenta y dos milésimos", "Ochenta y dos centésimos"], validate: (ans) => ans === "Ochenta y dos milésimos", robotIdle: "Nivel 2: Cuenta las posiciones: 1, 2, 3...", robotSuccess: "¡Muy bien! 3 posiciones = milésimos.", robotError: "Revisa bien. Hay tres números a la derecha." },
+                    { enunciadoText: "¿Cómo se lee el siguiente número?", enunciadoLatex: String.raw`1,002`, type: "choice", options: ["Un entero dos centésimos", "Un entero dos milésimos", "Doce milésimos"], validate: (ans) => ans === "Un entero dos milésimos", robotIdle: "Nivel 3: Separa los enteros de los decimales.", robotSuccess: "¡Excelente! El 2 cae en la tercera posición.", robotError: "No olvides mencionar el entero primero." },
+                    { enunciadoText: "¿Cómo se lee el siguiente número?", enunciadoLatex: String.raw`12,00045`, type: "choice", options: ["Doce enteros cuarenta y cinco diez milésimos", "Doce enteros cuarenta y cinco cien milésimos"], validate: (ans) => ans === "Doce enteros cuarenta y cinco cien milésimos", robotIdle: "Nivel 4: 5 cifras decimales. ¡Cuenta con cuidado!", robotSuccess: "¡Súper! 5 posiciones son cien milésimos.", robotError: "Décimo(1), Centésimo(2), Milésimo(3), Diez milésimo(4), Cien milésimo(5)." },
+                    { enunciadoText: "¿Cómo se lee el siguiente número?", enunciadoLatex: String.raw`19,000048`, type: "choice", options: ["19 enteros 48 millonésimos", "19 enteros 48 cien milésimos"], validate: (ans) => ans === "19 enteros 48 millonésimos", robotIdle: "Nivel 5: 6 cifras decimales es sinónimo de un millón.", robotSuccess: "¡Genial! Dominas las lecturas avanzadas.", robotError: "Cuenta todos los ceros y números." }
+                ]
+            },
+            {
+                id: 5, title: "Reto 5", subtitle: "Comparación", cardBg: "from-[#10b981] to-[#047857]",
+                levels: [
+                    { enunciadoText: "Compara usando <, > o = :", enunciadoLatex: String.raw`7,50 \quad \text{y} \quad 7,050`, type: "compare", left: "7,50", right: "7,050", validate: (ans) => ans === ">", robotIdle: "Nivel 1: Toca el círculo. Compara el primer número después de la coma.", robotSuccess: "¡Bien! 5 décimos es mayor que 0 décimos.", robotError: "Rellena con ceros mentalmente: 7,500 vs 7,050." },
+                    { enunciadoText: "Compara usando <, > o = :", enunciadoLatex: String.raw`7,96 \quad \text{y} \quad 8,96`, type: "compare", left: "7,96", right: "8,96", validate: (ans) => ans === "<", robotIdle: "Nivel 2: Compara siempre primero la parte entera.", robotSuccess: "¡Fácil! 7 enteros es menor que 8 enteros.", robotError: "Míralo de izquierda a derecha. Fíjate en los enteros." },
+                    { enunciadoText: "Compara usando <, > o = :", enunciadoLatex: String.raw`13,95 \quad \text{y} \quad 13,86`, type: "compare", left: "13,95", right: "13,86", validate: (ans) => ans === ">", robotIdle: "Nivel 3: Enteros iguales, vamos a los décimos.", robotSuccess: "¡Correcto! El décimo 9 gana al décimo 8.", robotError: "Compara el primer número después de la coma." },
+                    { enunciadoText: "Compara usando <, > o = :", enunciadoLatex: String.raw`47,9 \quad \text{y} \quad 49,70`, type: "compare", left: "47,9", right: "49,70", validate: (ans) => ans === "<", robotIdle: "Nivel 4: Revisa los enteros, no te dejes engañar por los decimales.", robotSuccess: "¡Muy bien! 47 es menor que 49.", robotError: "La parte entera siempre manda primero." },
+                    { enunciadoText: "Compara usando <, > o = :", enunciadoLatex: String.raw`81,94 \quad \text{y} \quad 81,9400`, type: "compare", left: "81,94", right: "81,9400", validate: (ans) => ans === "=", robotIdle: "Nivel 5: Los ceros al final de la parte decimal... ¿valen algo?", robotSuccess: "¡Exacto! Los ceros a la derecha extrema no cambian el valor.", robotError: "Agrega ceros al primer número para que tengan la misma cantidad." }
+                ]
+            },
+            {
+                id: 6, title: "Reto 6", subtitle: "Orden Creciente", cardBg: "from-[#3b82f6] to-[#1d4ed8]",
+                levels: [
+                    { enunciadoText: "Ordena de menor a mayor (toca los números):", enunciadoLatex: String.raw`\text{Nivel 1 (3 números)}`, type: "order", items: ["6,12", "6,06", "6,037"], validate: (ans) => ans && ans.join(',') === "6,037,6,06,6,12", robotIdle: "Nivel 1: TIP: Rellena mentalmente con ceros a 3 decimales (6,120).", robotSuccess: "¡Orden perfecto!", robotError: "Revisa bien: busca el más pequeño primero." },
+                    { enunciadoText: "Ordena de menor a mayor:", enunciadoLatex: String.raw`\text{Nivel 2 (3 números)}`, type: "order", items: ["7,31", "7,305", "7,308"], validate: (ans) => ans && ans.join(',') === "7,305,7,308,7,31", robotIdle: "Nivel 2: Compara los milésimos. 7,310 vs 7,305 vs 7,308.", robotSuccess: "¡Excelente!", robotError: "Fíjate en la última cifra si todo lo anterior es igual." },
+                    { enunciadoText: "Ordena de menor a mayor:", enunciadoLatex: String.raw`\text{Nivel 3 (4 números)}`, type: "order", items: ["2,1", "2,01", "2,11", "2,011"], validate: (ans) => ans && ans.join(',') === "2,01,2,011,2,1,2,11", robotIdle: "Nivel 3: ¡Subimos a 4 números! Rellena con ceros para no confundirte.", robotSuccess: "¡Muy bien! Ya dominas 4 números.", robotError: "Cuidado, 2,010 es menor que 2,011." },
+                    { enunciadoText: "Ordena de menor a mayor:", enunciadoLatex: String.raw`\text{Nivel 4 (4 números)}`, type: "order", items: ["0,5", "0,45", "0,505", "0,455"], validate: (ans) => ans && ans.join(',') === "0,45,0,455,0,5,0,505", robotIdle: "Nivel 4: Separa mentalmente los que empiezan con 0,4 y 0,5.", robotSuccess: "¡Impresionante!", robotError: "Los que empiezan con 0,4 van primero." },
+                    { enunciadoText: "Ordena de menor a mayor:", enunciadoLatex: String.raw`\text{Nivel Maestro (5 números)}`, type: "order", items: ["3,2", "3,02", "3,22", "3,022", "3,002"], validate: (ans) => ans && ans.join(',') === "3,002,3,02,3,022,3,2,3,22", robotIdle: "Nivel 5: ¡El desafío final de 5 bloques! Tómate tu tiempo.", robotSuccess: "¡Maestro del orden creciente!", robotError: "Si te equivocas, toca los números de abajo para subirlos de nuevo." }
+                ]
+            },
+            {
+                id: 7, title: "Reto 7", subtitle: "Orden Decreciente", cardBg: "from-[#eab308] to-[#ca8a04]",
+                levels: [
+                    { enunciadoText: "Ordena de mayor a menor:", enunciadoLatex: String.raw`\text{Nivel 1 (3 números)}`, type: "order", items: ["5,007", "5,120", "5,058"], validate: (ans) => ans && ans.join(',') === "5,120,5,058,5,007", robotIdle: "Nivel 1: ¡Ahora es al revés! Busca el MÁS GRANDE primero.", robotSuccess: "¡Correcto! Bajando la escalera.", robotError: "Mayor a menor. El más grande va de primero." },
+                    { enunciadoText: "Ordena de mayor a menor:", enunciadoLatex: String.raw`\text{Nivel 2 (3 números)}`, type: "order", items: ["4,7", "4,71", "4,675"], validate: (ans) => ans && ans.join(',') === "4,71,4,7,4,675", robotIdle: "Nivel 2: 4,7 es 4,700. Cuidado con ese.", robotSuccess: "¡Muy bien!", robotError: "Rellena con ceros. 4,710 es mayor que 4,700." },
+                    { enunciadoText: "Ordena de mayor a menor:", enunciadoLatex: String.raw`\text{Nivel 3 (4 números)}`, type: "order", items: ["8,5", "8,05", "8,55", "8,055"], validate: (ans) => ans && ans.join(',') === "8,55,8,5,8,055,8,05", robotIdle: "Nivel 3: Cuatro números. Empieza buscando los que tienen décimo 5.", robotSuccess: "¡Súper!", robotError: "Verifica posición por posición de izquierda a derecha." },
+                    { enunciadoText: "Ordena de mayor a menor:", enunciadoLatex: String.raw`\text{Nivel 4 (4 números)}`, type: "order", items: ["1,9", "1,91", "1,901", "1,911"], validate: (ans) => ans && ans.join(',') === "1,911,1,91,1,901,1,9", robotIdle: "Nivel 4: Todos empiezan con 1,9. Mira los centésimos.", robotSuccess: "¡Imparable!", robotError: "Compara el tercer decimal (milésimos)." },
+                    { enunciadoText: "Ordena de mayor a menor:", enunciadoLatex: String.raw`\text{Nivel Maestro (5 números)}`, type: "order", items: ["0,8", "0,88", "0,08", "0,808", "0,088"], validate: (ans) => ans && ans.join(',') === "0,88,0,808,0,8,0,088,0,08", robotIdle: "Nivel 5: Concentración total. Cinco números engañosos.", robotSuccess: "¡Reto conquistado! Eres un genio del orden.", robotError: "0,880 es el rey, busca el siguiente más grande." }
+                ]
+            },
+            {
+                id: 8, title: "Reto 8", subtitle: "Número Intermedio", cardBg: "from-[#ec4899] to-[#be185d]",
+                levels: [
+                    { enunciadoText: "Escribe un decimal que esté entre:", enunciadoLatex: String.raw`8 < \quad ? \quad < 8,1`, type: "input", graphic: null, validate: (ans) => { let v = parseFloat(ans.replace(',','.')); return v > 8 && v < 8.1; }, robotIdle: "Nivel 1: Imagina que es 8,00 y 8,10. Hay muchos en medio.", robotSuccess: "¡Perfecto! Ese número cabe justo ahí.", robotError: "Ese número se sale de los límites." },
+                    { enunciadoText: "Escribe un decimal que esté entre:", enunciadoLatex: String.raw`2,47 < \quad ? \quad < 2,50`, type: "input", graphic: null, validate: (ans) => { let v = parseFloat(ans.replace(',','.')); return v > 2.47 && v < 2.50; }, robotIdle: "Nivel 2: Entre 47 y 50... ¡fácil!", robotSuccess: "¡Acertaste!", robotError: "Piensa en 2,48 o 2,49." },
+                    { enunciadoText: "Escribe un decimal que esté entre:", enunciadoLatex: String.raw`5,16 < \quad ? \quad < 5,7`, type: "input", graphic: null, validate: (ans) => { let v = parseFloat(ans.replace(',','.')); return v > 5.16 && v < 5.7; }, robotIdle: "Nivel 3: El límite derecho es 5,70. Tienes muchísimo espacio.", robotSuccess: "¡Muy bien! Tienes buena intuición.", robotError: "El número debe ser mayor a 5,16 y menor a 5,70." },
+                    { enunciadoText: "Escribe un decimal que esté entre:", enunciadoLatex: String.raw`37,52 < \quad ? \quad < 37,60`, type: "input", graphic: null, validate: (ans) => { let v = parseFloat(ans.replace(',','.')); return v > 37.52 && v < 37.60; }, robotIdle: "Nivel 4: Busca en el rango de los centésimos.", robotSuccess: "¡Excelente jugada!", robotError: "Fíjate bien en la parte entera y los décimos." },
+                    { enunciadoText: "Escribe un decimal que esté entre:", enunciadoLatex: String.raw`0,001 < \quad ? \quad < 0,002`, type: "input", graphic: null, validate: (ans) => { let v = parseFloat(ans.replace(',','.')); return v > 0.001 && v < 0.002; }, robotIdle: "Nivel 5: Para encontrar uno en medio, añade un decimal más: 0,0010 y 0,0020.", robotSuccess: "¡Magia! Siempre hay infinitos números en medio.", robotError: "Tienes que usar una posición decimal extra (diez milésimos)." }
+                ]
+            },
+            {
+                id: 9, title: "Reto 9", subtitle: "Verdadero o Falso", cardBg: "from-[#ef4444] to-[#b91c1c]",
+                levels: [
+                    { enunciadoText: "¿Es correcta la siguiente afirmación?", enunciadoLatex: String.raw`6,27 < 6,72`, type: "true-false", validate: (ans) => ans === true, robotIdle: "Nivel 1: Compara los décimos.", robotSuccess: "¡Correcto! 2 es menor que 7.", robotError: "Revisa bien de izquierda a derecha." },
+                    { enunciadoText: "¿Es correcta la siguiente afirmación?", enunciadoLatex: String.raw`4,008 < 4,800`, type: "true-false", validate: (ans) => ans === true, robotIdle: "Nivel 2: Cuidado con la ilusión visual de los ceros.", robotSuccess: "¡Bien visto! 0 décimos es menor que 8 décimos.", robotError: "Compara el número inmediatamente después de la coma." },
+                    { enunciadoText: "¿Es correcta la siguiente afirmación?", enunciadoLatex: String.raw`0,0041 > 0,0410`, type: "true-false", validate: (ans) => ans === false, robotIdle: "Nivel 3: Cuenta las posiciones con calma.", robotSuccess: "¡Exacto, es FALSO! El segundo número tiene más décimos y centésimos.", robotError: "Falso. 0,0041 es menor." },
+                    { enunciadoText: "¿Es correcta la siguiente afirmación?", enunciadoLatex: String.raw`3,003 > 3,030`, type: "true-false", validate: (ans) => ans === false, robotIdle: "Nivel 4: Los centésimos revelan la verdad.", robotSuccess: "¡Muy bien, es FALSO!", robotError: "Revisa el segundo decimal. 0 vs 3." },
+                    { enunciadoText: "¿Es correcta la siguiente afirmación?", enunciadoLatex: String.raw`0,00065 < 0,00650`, type: "true-false", validate: (ans) => ans === true, robotIdle: "Nivel 5: Reto visual extremo. Cuenta los ceros.", robotSuccess: "¡Superado! La concentración lo es todo.", robotError: "Cuenta los ceros después de la coma." }
+                ]
+            },
+            {
+                id: 10, title: "Reto 10", subtitle: "Convertir a Decimal", cardBg: "from-[#14b8a6] to-[#0f766e]",
+                levels: [
+                    { enunciadoText: "Convierte a número decimal (divide):", enunciadoLatex: String.raw`\frac{2}{5} = ?`, type: "input", graphic: { type: "fractionCircle", num: 2, den: 5, color: "#14b8a6" }, validate: (ans) => ans === "0.4" || ans === "0,4", robotIdle: "Nivel 1: Divide 2 ÷ 5 en papel.", robotSuccess: "¡Bien! 2 ÷ 5 = 0,4.", robotError: "Agrega un cero al 2 y pon 0, en el resultado." },
+                    { enunciadoText: "Convierte a número decimal:", enunciadoLatex: String.raw`\frac{7}{2} = ?`, type: "input", graphic: null, validate: (ans) => ans === "3.5" || ans === "3,5", robotIdle: "Nivel 2: La mitad de 7. El numerador es mayor, habrá enteros.", robotSuccess: "¡Exacto! Son 3 enteros y medio.", robotError: "7 dividido entre 2 da más de 1." },
+                    { enunciadoText: "Convierte a número decimal (3 cifras max):", enunciadoLatex: String.raw`\frac{1}{3} = ?`, type: "input", graphic: { type: "fractionCircle", num: 1, den: 3, color: "#14b8a6" }, validate: (ans) => ans === "0.333" || ans === "0,333", robotIdle: "Nivel 3: Es infinito, solo escribe los primeros 3 decimales.", robotSuccess: "¡Perfecto! Es un decimal periódico puro.", robotError: "Escribe 0, y el mismo número tres veces." },
+                    { enunciadoText: "Convierte a número decimal:", enunciadoLatex: String.raw`\frac{3}{8} = ?`, type: "input", graphic: null, validate: (ans) => ans === "0.375" || ans === "0,375", robotIdle: "Nivel 4: Esta división exacta tiene 3 decimales.", robotSuccess: "¡Excelente división!", robotError: "Divide con cuidado: 30 ÷ 8... sobra 6... 60 ÷ 8..." },
+                    { enunciadoText: "Convierte a número decimal:", enunciadoLatex: String.raw`\frac{12}{5} = ?`, type: "input", graphic: null, validate: (ans) => ans === "2.4" || ans === "2,4", robotIdle: "Nivel 5: Otra fracción mayor a la unidad.", robotSuccess: "¡Lo lograste! Reto completado.", robotError: "12 ÷ 5 = 2 y sobra 2. Sigue dividiendo." }
+                ]
+            },
+            {
+                id: 11, title: "Reto 11", subtitle: "Aproximación", cardBg: "from-[#6366f1] to-[#4338ca]",
+                levels: [
+                    { enunciadoText: "Aproxima el número al ENTERO:", enunciadoLatex: String.raw`2,856 \approx ?`, type: "input", graphic: null, validate: (ans) => ans === "3", robotIdle: "Nivel 1: Corta en la coma. El décimo es 8 (mayor a 5), el entero sube.", robotSuccess: "¡Bien redondeado! Sube a 3.", robotError: "Si el vecino de la derecha es 5 o más, se suma 1." },
+                    { enunciadoText: "Aproxima el número al DÉCIMO:", enunciadoLatex: String.raw`6,67824 \approx ?`, type: "input", graphic: null, validate: (ans) => ans === "6.7" || ans === "6,7", robotIdle: "Nivel 2: Corta en el primer decimal. Mira al segundo (7).", robotSuccess: "¡Correcto!", robotError: "El 7 hace que el 6 suba a 7." },
+                    { enunciadoText: "Aproxima el número al CENTÉSIMO:", enunciadoLatex: String.raw`35,824 \approx ?`, type: "input", graphic: null, validate: (ans) => ans === "35.82" || ans === "35,82", robotIdle: "Nivel 3: Corta en el segundo decimal (2). Mira al tercero (4).", robotSuccess: "¡Perfecto! Como es 4, se queda igual.", robotError: "El 4 es menor que 5, así que el número no sube." },
+                    { enunciadoText: "Aproxima el número al ENTERO:", enunciadoLatex: String.raw`105,791 \approx ?`, type: "input", graphic: null, validate: (ans) => ans === "106", robotIdle: "Nivel 4: Nos deshacemos de la coma. Fíjate en el 7.", robotSuccess: "¡Muy bien! Sube a 106.", robotError: "El 7 empuja al 105 sumándole 1." },
+                    { enunciadoText: "Aproxima el número al MILÉSIMO:", enunciadoLatex: String.raw`40,5612 \approx ?`, type: "input", graphic: null, validate: (ans) => ans === "40.561" || ans === "40,561", robotIdle: "Nivel 5: Corta en el tercer decimal. Mira al cuarto.", robotSuccess: "¡Reto superado! Redondeo perfecto.", robotError: "El milésimo es 1. El vecino es 2, así que se queda igual." }
+                ]
+            },
+            {
+                id: 12, title: "Reto 12", subtitle: "Fracción Generatriz", cardBg: "from-[#f97316] to-[#c2410c]",
+                levels: [
+                    { enunciadoText: "Halla la fracción generatriz simplificada de:", enunciadoLatex: String.raw`0,8 = ?`, type: "fraction-input", graphic: { type: "grid10", filled: 8, color: "#f97316" }, validate: (ans) => ans && ans.num === "4" && ans.den === "5", robotIdle: "Nivel 1: Escribe 8/10 y luego sácale mitad a ambos.", robotSuccess: "¡Genial! 4/5 es la fracción irreducible.", robotError: "Divide numerador y denominador entre 2." },
+                    { enunciadoText: "Halla la fracción generatriz simplificada de:", enunciadoLatex: String.raw`0,55 = ?`, type: "fraction-input", graphic: { type: "grid100", filled: 55, color: "#f97316" }, validate: (ans) => ans && ans.num === "11" && ans.den === "20", robotIdle: "Nivel 2: Es exacto. 55/100 y saca quinta (÷5).", robotSuccess: "¡Súper!", robotError: "Divide 55 entre 5 y 100 entre 5." },
+                    { enunciadoText: "Halla la fracción generatriz simplificada de:", enunciadoLatex: String.raw`0,444... = ?`, type: "fraction-input", graphic: null, validate: (ans) => ans && ans.num === "4" && ans.den === "9", robotIdle: "Nivel 3: ¡Es periódico puro! En vez de 10, va un 9 abajo.", robotSuccess: "¡Correcto! Los infinitos se dominan con nueves.", robotError: "La regla del sombrerito: pone un 9 por cada cifra que se repite." },
+                    { enunciadoText: "Halla la fracción generatriz simplificada de:", enunciadoLatex: String.raw`0,222... = ?`, type: "fraction-input", graphic: null, validate: (ans) => ans && ans.num === "2" && ans.den === "9", robotIdle: "Nivel 4: Mismo truco. Es un periódico puro.", robotSuccess: "¡Muy bien!", robotError: "Solo hay una cifra que se repite, así que va un solo 9." },
+                    { enunciadoText: "Halla la fracción generatriz simplificada de:", enunciadoLatex: String.raw`0,313131... = ?`, type: "fraction-input", graphic: null, validate: (ans) => ans && ans.num === "31" && ans.den === "99", robotIdle: "Nivel 5: Ahora se repiten dos cifras (31). Necesitarás dos nueves.", robotSuccess: "¡Felicidades! Completaste las fracciones generatrices.", robotError: "Dos cifras bajo el sombrero = dos nueves abajo." }
+                ]
+            },
+            {
+                id: 13, title: "Reto 13", subtitle: "Clasificación Decimal", cardBg: "from-[#10b981] to-[#047857]",
+                levels: [
+                    { enunciadoText: "¿Qué tipo de decimal es?", enunciadoLatex: String.raw`0,905`, type: "choice", options: ["Exacto", "Periódico Puro", "Periódico Mixto"], validate: (ans) => ans === "Exacto", robotIdle: "Nivel 1: Termina, no tiene puntos suspensivos.", robotSuccess: "¡Correcto! Se puede contar cuántos decimales tiene.", robotError: "Si no tiene '...' al final, es exacto." },
+                    { enunciadoText: "¿Qué tipo de decimal es?", enunciadoLatex: String.raw`2,666...`, type: "choice", options: ["Exacto", "Periódico Puro", "Periódico Mixto"], validate: (ans) => ans === "Periódico Puro", robotIdle: "Nivel 2: La repetición empieza justo después de la coma.", robotSuccess: "¡Muy bien! Toda la parte decimal se repite.", robotError: "Fíjate si hay algún número intruso que no se repita." },
+                    { enunciadoText: "¿Qué tipo de decimal es?", enunciadoLatex: String.raw`0,41777...`, type: "choice", options: ["Exacto", "Periódico Puro", "Periódico Mixto"], validate: (ans) => ans === "Periódico Mixto", robotIdle: "Nivel 3: El 41 no se repite, pero el 7 sí. Es una mezcla.", robotSuccess: "¡Exacto! Tiene parte no periódica y parte periódica.", robotError: "Al tener una mezcla de números fijos y repetidos, es mixto." },
+                    { enunciadoText: "¿Qué tipo de decimal es?", enunciadoLatex: String.raw`0,672672...`, type: "choice", options: ["Exacto", "Periódico Puro", "Periódico Mixto"], validate: (ans) => ans === "Periódico Puro", robotIdle: "Nivel 4: Todo el bloque '672' se repite completo.", robotSuccess: "¡Súper!", robotError: "Todo el decimal está bajo el ciclo repetitivo." },
+                    { enunciadoText: "¿Qué tipo de decimal es?", enunciadoLatex: String.raw`2,68181...`, type: "choice", options: ["Exacto", "Periódico Puro", "Periódico Mixto"], validate: (ans) => ans === "Periódico Mixto", robotIdle: "Nivel 5: El 6 está estático y el 81 se repite al infinito.", robotSuccess: "¡Has clasificado todos con éxito!", robotError: "Hay una parte que no se repite antes del ciclo." }
+                ]
+            },
+            {
+                id: 14, title: "Reto 14", subtitle: "Fracción Especial a Decimal", cardBg: "from-[#d946ef] to-[#a21caf]",
+                levels: [
+                    { enunciadoText: "Escribe el número decimal:", enunciadoLatex: String.raw`\frac{235}{10000} = ?`, type: "input", graphic: null, validate: (ans) => ans === "0.0235" || ans === "0,0235", robotIdle: "Nivel 1: Cuatro ceros = Cuatro decimales. Rellena con ceros a la izquierda.", robotSuccess: "¡Perfecto!", robotError: "0, y luego ceros hasta que el 235 encaje en 4 espacios." },
+                    { enunciadoText: "Escribe el número decimal:", enunciadoLatex: String.raw`\frac{32}{100000} = ?`, type: "input", graphic: null, validate: (ans) => ans === "0.00032" || ans === "0,00032", robotIdle: "Nivel 2: Cinco ceros. Mucho espacio que rellenar.", robotSuccess: "¡Excelente control de los ceros!", robotError: "Necesitas tener 5 cifras después de la coma." },
+                    { enunciadoText: "Selecciona el número decimal equivalente:", enunciadoLatex: String.raw`\frac{35}{99} = ?`, type: "choice", options: ["0,35", "0,355...", "0,3535...", "0,035..."], validate: (ans) => ans === "0,3535...", robotIdle: "Nivel 3: Hay dos nueves abajo, así que es Periódico Puro de 2 cifras.", robotSuccess: "¡Genial! 99 abajo repite todo el numerador.", robotError: "Los nueves en el denominador crean ciclos infinitos." },
+                    { enunciadoText: "Selecciona el número decimal equivalente:", enunciadoLatex: String.raw`\frac{135}{999} = ?`, type: "choice", options: ["0,135135...", "0,135", "1,3535...", "0,0135..."], validate: (ans) => ans === "0,135135...", robotIdle: "Nivel 4: Tres nueves = ciclo repetitivo de tres cifras.", robotSuccess: "¡Imparable!", robotError: "El 135 se repetirá por siempre." },
+                    { enunciadoText: "Selecciona el número decimal equivalente:", enunciadoLatex: String.raw`\frac{21}{990} = ?`, type: "choice", options: ["0,2121...", "0,02121...", "0,021", "2,199..."], validate: (ans) => ans === "0,02121...", robotIdle: "Nivel 5: Un cero y dos nueves = 1 cifra fija y 2 cifras periódicas. ¡Difícil!", robotSuccess: "¡ERES EL MAESTRO ABSOLUTO DE LOS DECIMALES!", robotError: "El cero del denominador desplaza todo un espacio a la derecha." }
+                ]
+            }
+        ];
+
+        const VisualAid = memo(({ graphic }) => {
+            if (!graphic) return null;
+
+            if (graphic.type === "base10") {
+                return (
+                    <div className="flex gap-1.5 sm:gap-2 justify-center flex-wrap max-w-full my-2 sm:my-4 scale-75 sm:scale-90 md:scale-100 origin-center bg-white p-2 sm:p-3 rounded-xl border-2 border-slate-200 shadow-sm">
+                        {Array.from({length: graphic.units}).map((_, i) => (
+                            <div key={`u-${i}`} className="w-12 h-12 sm:w-16 sm:h-16 rounded shadow-sm border-[3px] border-slate-300 grid grid-cols-2 grid-rows-5 gap-px sm:gap-0.5 p-0.5 bg-slate-100">
+                                {Array.from({length: 10}).map((_, j) => <div key={j} style={{backgroundColor: graphic.color}} className="w-full h-full rounded-[2px] shadow-sm"></div>)}
+                            </div>
+                        ))}
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded border-[3px] border-slate-300 border-dashed grid grid-cols-2 grid-rows-5 gap-px sm:gap-0.5 p-0.5 bg-slate-50">
+                            {Array.from({length: 10}).map((_, j) => <div key={j} style={{backgroundColor: j < graphic.tenths ? graphic.color : 'transparent'}} className="w-full h-full rounded-[2px] transition-all duration-500"></div>)}
+                        </div>
+                    </div>
+                );
+            }
+
+            if (graphic.type === "grid100") {
+                return (
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 my-2 sm:my-4 bg-white border-[3px] border-slate-300 rounded-lg shadow-sm grid grid-cols-10 grid-rows-10 gap-px p-1 scale-90 sm:scale-100 origin-center mx-auto">
+                        {Array.from({length: 100}).map((_, i) => (
+                            <div key={i} style={{backgroundColor: i < graphic.filled ? graphic.color : '#f8fafc'}} className="w-full h-full grid-cell"></div>
+                        ))}
+                    </div>
+                );
+            }
+
+            if (graphic.type === "grid10") {
+                return (
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 my-2 sm:my-4 bg-white border-[3px] border-slate-300 rounded-lg shadow-sm flex flex-col gap-0.5 p-1 scale-90 sm:scale-100 origin-center mx-auto">
+                        {Array.from({length: 10}).map((_, i) => (
+                            <div key={i} style={{backgroundColor: i < graphic.filled ? graphic.color : '#f8fafc'}} className="w-full flex-1 grid-cell rounded-[2px]"></div>
+                        ))}
+                    </div>
+                );
+            }
+
+            if (graphic.type === "fractionCircle") {
+                const angle = 360 / graphic.den;
+                return (
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 my-2 sm:my-4 relative rounded-full border-[4px] border-slate-300 overflow-hidden bg-slate-50 shadow-sm mx-auto scale-90 sm:scale-100">
+                        {Array.from({length: graphic.den}).map((_, i) => {
+                            const isFilled = i < graphic.num;
+                            return (
+                                <div key={i} className="absolute inset-0 origin-center" style={{ transform: `rotate(${i * angle}deg)` }}>
+                                    <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+                                        <path d={`M 50 50 L 50 0 A 50 50 0 0 1 ${50 + 50*Math.sin(angle*Math.PI/180)} ${50 - 50*Math.cos(angle*Math.PI/180)} Z`} fill={isFilled ? graphic.color : '#f8fafc'} stroke="#cbd5e1" strokeWidth="1" />
+                                    </svg>
+                                </div>
+                            )
+                        })}
+                    </div>
+                );
+            }
+            return null;
+        });
+
+        const MathDisplay = memo(({ latex, className = "" }) => {
+            const containerRef = useRef(null);
+            useEffect(() => {
+                if (containerRef.current && window.katex) {
+                    try { window.katex.render(latex, containerRef.current, { displayMode: true, throwOnError: false }); } 
+                    catch (e) { containerRef.current.innerText = latex; }
+                }
+            }, [latex]);
+            return <div ref={containerRef} className={`inline-block whitespace-nowrap ${className}`} />;
+        });
+
+        const InteractiveArea = ({ level, answer, setAnswer, status }) => {
+            if (level.type === 'input') {
+                return (
+                    <input type="text" value={answer || ""} onChange={(e) => setAnswer(e.target.value)} disabled={status === 'success'}
+                           className="lab-input lab-input-text p-2 sm:p-5 w-32 sm:w-48 md:w-72 tracking-widest mt-2 sm:mt-4 shadow-lg border-4 sm:border-[5px]" placeholder="?" autoComplete="off" />
+                );
+            }
+            if (level.type === 'fraction-input') {
+                return (
+                    <div className="flex flex-col items-center gap-2 sm:gap-3 mt-2 sm:mt-4">
+                        <input type="number" value={answer?.num || ""} onChange={(e) => setAnswer({...answer, num: e.target.value})} disabled={status === 'success'} className="lab-input lab-input-fraction p-1 sm:p-2 w-20 sm:w-32 md:w-44 shadow-md border-2 sm:border-4" placeholder="Num" />
+                        <div className="w-24 sm:w-40 md:w-52 h-1.5 sm:h-2.5 bg-slate-800 rounded-full shadow-sm"></div>
+                        <input type="number" value={answer?.den || ""} onChange={(e) => setAnswer({...answer, den: e.target.value})} disabled={status === 'success'} className="lab-input lab-input-fraction p-1 sm:p-2 w-20 sm:w-32 md:w-44 shadow-md border-2 sm:border-4" placeholder="Den" />
+                    </div>
+                );
+            }
+            if (level.type === 'choice') {
+                return (
+                    <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mt-4 sm:mt-6 w-full max-w-3xl px-1">
+                        {level.options.map((opt, i) => (
+                            <button key={i} disabled={status === 'success'} onClick={() => { AudioController.play('pop'); setAnswer(opt); }}
+                                    className={`px-3 py-2 sm:px-6 sm:py-4 rounded-xl text-xs sm:text-xl md:text-2xl font-bold transition-all border-[3px] shadow-sm flex-1 min-w-[45%] w-full sm:w-auto break-words text-center leading-tight sm:leading-snug ${answer === opt ? 'bg-[#fde047] text-slate-900 border-yellow-500 scale-105 shadow-[0_5px_15px_rgba(253,224,71,0.5)]' : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 hover:shadow-md'}`}>
+                                {opt}
+                            </button>
+                        ))}
+                    </div>
+                );
+            }
+            if (level.type === 'compare') {
+                const cycle = () => { if (status === 'success') return; AudioController.play('pop'); const syms = ['?', '<', '>', '=']; let n = syms.indexOf(answer||'?')+1; setAnswer(syms[n===syms.length?1:n]); };
+                return (
+                    <div className="flex items-center justify-center gap-3 sm:gap-8 lg:gap-12 mt-6 sm:mt-12 bg-white px-4 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border-4 border-slate-200 shadow-sm w-full max-w-full overflow-hidden scale-90 sm:scale-100 origin-center">
+                        <span className="text-3xl sm:text-5xl lg:text-7xl font-black text-slate-800 tracking-wider truncate shrink">{level.left}</span>
+                        <button onClick={cycle} className="w-14 h-14 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#7c3aed] border-4 sm:border-[6px] border-[#c4b5fd] flex items-center justify-center text-2xl sm:text-5xl lg:text-6xl text-white font-black shadow-[0_10px_25px_rgba(79,70,229,0.4)] transition-transform active:scale-90 hover:scale-105 shrink-0">
+                            {answer || '?'}
+                        </button>
+                        <span className="text-3xl sm:text-5xl lg:text-7xl font-black text-slate-800 tracking-wider truncate shrink">{level.right}</span>
+                    </div>
+                );
+            }
+            if (level.type === 'order') {
+                const sel = answer || []; const avail = level.items.filter(i => !sel.includes(i));
+                const sItem = (i) => { if(status==='success') return; AudioController.play('pop'); setAnswer([...sel, i]); };
+                const dItem = (i) => { if(status==='success') return; AudioController.play('pop-reverse'); setAnswer(sel.filter(x => x !== i)); };
+                return (
+                    <div className="flex flex-col items-center w-full mt-2 sm:mt-4 gap-4 sm:gap-8 px-1">
+                        <div className="w-full max-w-3xl min-h-[80px] sm:min-h-[140px] bg-slate-100/50 border-4 sm:border-[5px] border-dashed border-slate-300 rounded-[1.5rem] sm:rounded-[2rem] p-2 sm:p-4 flex flex-wrap justify-center items-center gap-2 sm:gap-3 transition-colors shadow-inner relative">
+                            {sel.length === 0 && <span className="absolute text-slate-400 text-xs sm:text-xl font-bold tracking-widest uppercase text-center w-full px-2">Caja de Orden - Toca para bajar</span>}
+                            {sel.map((item, i) => <button key={`s-${i}`} onClick={()=>dItem(item)} className="px-3 py-2 sm:px-8 sm:py-5 rounded-xl sm:rounded-2xl text-lg sm:text-2xl md:text-4xl font-black bg-[#fde047] text-slate-900 shadow-[0_5px_15px_rgba(253,224,71,0.4)] transition-transform hover:scale-105 active:scale-95 border-[3px] border-yellow-500 z-10">{item}</button>)}
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-2 sm:gap-4 max-w-3xl bg-white p-2 sm:p-4 rounded-2xl sm:rounded-3xl border-[3px] border-slate-200 shadow-sm w-full">
+                            {avail.length === 0 && <span className="text-emerald-500 font-black text-xs sm:text-sm uppercase tracking-widest text-center w-full">¡Todos ordenados! Comprueba.</span>}
+                            {avail.map((item, i) => <button key={`a-${i}`} onClick={()=>sItem(item)} className="px-3 py-2 sm:px-8 sm:py-5 rounded-xl sm:rounded-2xl text-lg sm:text-2xl md:text-4xl font-black bg-slate-800 text-white shadow-md transition-transform hover:scale-105 active:scale-95 border-[3px] border-slate-600">{item}</button>)}
+                        </div>
+                    </div>
+                );
+            }
+            if (level.type === 'true-false') {
+                return (
+                    <div className="flex gap-4 sm:gap-12 mt-6 sm:mt-10 scale-90 sm:scale-100 origin-center justify-center w-full">
+                        <button disabled={status === 'success'} onClick={() => { AudioController.play('pop'); setAnswer(true); }} className={`w-24 h-24 sm:w-32 sm:h-32 lg:w-48 lg:h-48 rounded-2xl sm:rounded-[2rem] text-lg sm:text-2xl md:text-4xl font-black transition-all border-4 sm:border-[5px] shadow-sm flex items-center justify-center ${answer === true ? 'bg-emerald-500 text-white border-emerald-300 scale-110 shadow-[0_10px_25px_rgba(16,185,129,0.5)]' : 'bg-white text-emerald-600 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md'}`}>V</button>
+                        <button disabled={status === 'success'} onClick={() => { AudioController.play('pop'); setAnswer(false); }} className={`w-24 h-24 sm:w-32 sm:h-32 lg:w-48 lg:h-48 rounded-2xl sm:rounded-[2rem] text-lg sm:text-2xl md:text-4xl font-black transition-all border-4 sm:border-[5px] shadow-sm flex items-center justify-center ${answer === false ? 'bg-rose-500 text-white border-rose-300 scale-110 shadow-[0_10px_25px_rgba(244,63,94,0.5)]' : 'bg-white text-rose-600 border-slate-200 hover:border-rose-400 hover:bg-rose-50 hover:shadow-md'}`}>F</button>
+                    </div>
+                );
+            }
+            return null;
+        };
+
+        const FloatingBackground = memo(() => {
+            const symbols = ['%', ',', '.', '10', '100', '✨', '0,5', '<', '>', '=', '÷', '0,01'];
+            const elements = Array.from({ length: 24 }).map((_, i) => ({
+                id: i, symbol: symbols[i % symbols.length], left: `${(i * 4) % 95}%`,
+                animationDuration: `${12 + (i % 8) * 2}s`, animationDelay: `-${(i * 1.5)}s`,
+                fontSize: `${1.2 + (i % 3) * 0.8}rem`, opacity: 0.1
+            }));
+            return (
+                <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                    {elements.map((el) => <div key={el.id} className="absolute text-white font-black animate-floatUp select-none" style={{ left: el.left, bottom: '-15%', fontSize: el.fontSize, opacity: el.opacity, animationDuration: el.animationDuration, animationDelay: el.animationDelay }}>{el.symbol}</div>)}
+                </div>
+            );
+        });
+
+        const Confetti = memo(() => {
+            const colors = ['#fde047', '#60a5fa', '#f472b6', '#34d399', '#a78bfa', '#ff5722'];
+            const pieces = Array.from({ length: 80 }).map((_, i) => ({
+                id: i, left: `${50 + (Math.random() * 20 - 10)}%`, color: colors[Math.floor(Math.random() * colors.length)],
+                tx: `${(Math.random() - 0.5) * 600}px`, ty: `${(Math.random() - 1) * 600}px`, rot: `${Math.random() * 720}deg`, delay: `${Math.random() * 0.2}s`
+            }));
+            return (
+                <div className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden">
+                    {pieces.map((p) => <div key={p.id} className="absolute w-3 h-3 sm:w-4 sm:h-4 rounded-full animate-confettiExplosion shadow-sm" style={{ backgroundColor: p.color, '--tx': p.tx, '--ty': p.ty, '--rot': p.rot, animationDelay: p.delay, left: p.left, top: '50%' }} />)}
+                </div>
+            );
+        });
+
+        const RobotAssistant = ({ status, isThinking }) => {
+            const isSuccess = status === 'success'; const isError = status === 'error';
+            const getContainerAnim = () => { if (isSuccess) return 'animate-robotJump'; if (isError) return 'animate-shake'; return 'animate-robotFloat'; };
+            const getEyes = () => {
+                if (isSuccess) return <div className="w-full flex justify-between px-2"><div className="w-3.5 h-2 bg-emerald-400 rounded-t-full"></div><div className="w-3.5 h-2 bg-emerald-400 rounded-t-full"></div></div>;
+                if (isError) return <div className="w-full flex justify-between px-1.5"><div className="w-3 h-1 bg-rose-400 mt-1 rotate-12"></div><div className="w-3 h-1 bg-rose-400 mt-1 -rotate-12"></div></div>;
+                return <div className="w-full flex justify-between px-1.5"><div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div><div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div></div>;
+            };
+            const getMouth = () => {
+                if (isSuccess) return <div className="w-6 h-3.5 bg-rose-400 rounded-b-full mt-1.5"></div>;
+                if (isError) return <div className="w-3 h-3 border-t-[3px] border-rose-400 rounded-full mt-2"></div>;
+                return <div className="w-4 h-4 bg-rose-400 rounded-full mt-1.5 animate-ping"></div>;
+            };
+
+            return (
+                <div className={`relative flex flex-col items-center select-none shrink-0 ${getContainerAnim()}`}>
+                    <div className="relative z-0 flex flex-col items-center translate-y-1">
+                        <div className={`w-3.5 h-3.5 rounded-full shadow-[0_0_10px_currentColor] z-10 transition-colors ${isSuccess ? 'text-emerald-400 bg-emerald-400' : isError ? 'text-rose-500 bg-rose-500' : 'text-yellow-400 bg-yellow-400 animate-pulse'}`}></div>
+                        <div className="w-1.5 h-4 bg-slate-300"></div>
+                    </div>
+                    <div className="relative z-10 w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0] rounded-[1rem] sm:rounded-[1.2rem] border-[3px] sm:border-[4px] border-[#818cf8] shadow-xl flex flex-col items-center justify-center p-1 sm:p-1.5">
+                        <div className="w-full h-full bg-[#0f172a] rounded-lg sm:rounded-xl flex flex-col items-center justify-center p-1 sm:p-1.5 shadow-inner border border-[#6366f1]">
+                            {getEyes()} {getMouth()}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        function App() {
+            const [view, setView] = useState('home'); 
+            const [exIdx, setExIdx] = useState(0);
+            const [subIdx, setSubIdx] = useState(0);
+            const [status, setStatus] = useState('idle'); // idle, error, success
+            const [answer, setAnswer] = useState(null);
+            const [isMuted, setIsMuted] = useState(false);
+
+            const currentChallenge = EXERCISES[exIdx];
+            const currentLevel = currentChallenge.levels[subIdx];
+            const maxLevels = currentChallenge.levels.length;
+
+            const startExercise = (index) => {
+                AudioController.play('swoosh');
+                setExIdx(index);
+                setSubIdx(0);
+                setAnswer(null);
+                setStatus('idle');
+                setView('lab');
+            };
+
+            const checkAnswer = () => {
+                AudioController.init();
+                if (answer === null || answer === '' || (Array.isArray(answer) && answer.length === 0)) return;
+                
+                const isCorrect = currentLevel.validate(answer);
+                if (isCorrect) {
+                    setStatus('success');
+                    AudioController.play('success');
+                } else {
+                    setStatus('error');
+                    AudioController.play('error');
+                    setTimeout(() => { if (status !== 'success') setStatus('idle'); }, 2500);
+                }
+            };
+
+            const handleNext = () => {
+                AudioController.play('swoosh');
+                if (subIdx < maxLevels - 1) {
+                    setSubIdx(subIdx + 1);
+                    setAnswer(null);
+                    setStatus('idle');
+                } else {
+                    if(exIdx < EXERCISES.length - 1) {
+                        setExIdx(exIdx + 1);
+                        setSubIdx(0);
+                        setAnswer(null);
+                        setStatus('idle');
+                    } else {
+                        setView('home');
+                    }
+                }
+            };
+
+            const toggleMute = () => setIsMuted(AudioController.toggleMute());
+
+            // PORTADA
+            if (view === 'home') {
+                return (
+                    <div className="w-screen h-[100dvh] bg-gradient-to-br from-[#1e1b4b] via-[#4c1d95] to-[#701a75] flex flex-col items-center justify-start p-3 sm:p-6 relative font-fun overflow-y-auto overflow-x-hidden scrollbar-hide">
+                        <FloatingBackground />
+                        
+                        <div className="w-full max-w-6xl z-20 flex items-center justify-between mb-4 sm:mb-8 mt-1 shrink-0">
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl border-2 sm:border-[3px] border-yellow-300 bg-[#0f172a]/80 backdrop-blur-md text-yellow-300 font-black tracking-wider uppercase shadow-xl text-[10px] sm:text-base">
+                                <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 shrink-0" /> Tu Profe 20 Lab
+                            </div>
+                            <button onClick={toggleMute} className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-[#0f172a]/50 border-2 sm:border-[3px] border-white/30 backdrop-blur-md text-white hover:bg-white/30 transition-all active:scale-95 shadow-xl shrink-0">
+                                {isMuted ? <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" /> : <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />}
+                            </button>
+                        </div>
+
+                        <div className="relative z-10 text-center w-full max-w-6xl flex flex-col items-center">
+                            <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white mb-2 drop-shadow-[0_4px_0_rgba(0,0,0,0.4)] tracking-tight leading-none uppercase px-2">
+                                Números <span className="text-yellow-300 underline decoration-wavy decoration-pink-500 inline-block">Decimales</span>
+                            </h1>
+                            <p className="text-sm sm:text-xl md:text-2xl text-purple-200 mb-6 sm:mb-12 font-bold max-w-3xl px-4 leading-snug sm:leading-relaxed">
+                                ¡Descubre 70 retos organizados en 14 módulos! Completa los 5 niveles de cada bloque para dominar la pizarra. 🚀
+                            </p>
+
+                            <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 pb-12 px-2">
+                                {EXERCISES.map((ex, idx) => (
+                                    <button key={ex.id} onClick={() => startExercise(idx)} className={`group text-left p-3 sm:p-5 rounded-[1rem] sm:rounded-[1.5rem] bg-gradient-to-br ${ex.cardBg} border-2 sm:border-[3px] border-white/30 hover:border-white/70 hover:-translate-y-1 sm:hover:-translate-y-2 active:scale-95 transition-all flex flex-col justify-between relative overflow-hidden shadow-[0_8px_15px_rgba(0,0,0,0.3)] min-h-[7rem] sm:min-h-[10rem]`}>
+                                        <div className="flex items-center justify-between w-full">
+                                            <span className="bg-[#0f172a]/60 text-white text-[9px] sm:text-xs font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg uppercase tracking-widest backdrop-blur-sm truncate">
+                                                {ex.title}
+                                            </span>
+                                        </div>
+                                        <div className="my-1.5 sm:my-2 text-white font-black text-xs sm:text-lg leading-tight sm:leading-snug drop-shadow-md pr-1 sm:pr-2 line-clamp-2">
+                                            {ex.subtitle}
+                                        </div>
+                                        <div className="flex items-center justify-between pt-1.5 sm:pt-2 border-t border-white/20 w-full mt-auto">
+                                            <span className="text-[9px] sm:text-xs text-white/90 font-extrabold uppercase tracking-widest">5 Niveles</span>
+                                            <span className="bg-[#fde047] text-slate-900 w-5 h-5 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black group-hover:translate-x-1 sm:group-hover:translate-x-1.5 transition-transform text-[10px] sm:text-sm shadow-md shrink-0">➔</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="w-screen h-[100dvh] bg-gradient-to-br from-[#1e1b4b] via-[#3b0764] to-[#831843] text-slate-800 flex flex-col p-1 sm:p-4 relative font-fun overflow-hidden">
+                    <FloatingBackground />
+                    {status === 'success' && subIdx === 4 && <Confetti />}
+
+                    {/* Navbar Superior tipo Píldoras */}
+                    <div className="shrink-0 relative z-10 w-full max-w-7xl mx-auto flex justify-between items-center mb-1.5 sm:mb-4 px-1 gap-1 sm:gap-2">
+                        <button onClick={() => { AudioController.play('swoosh'); setView('home'); }} className="flex items-center justify-center px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#0f172a]/60 border-2 sm:border-[3px] border-white/30 backdrop-blur-md text-white font-black hover:bg-[#0f172a]/80 transition-all shadow-lg active:scale-95 text-xs sm:text-base shrink-0">
+                            <Home className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+                            <span className="hidden sm:inline">Portada</span>
+                        </button>
+
+                        <div className="flex items-center gap-1 sm:gap-2 bg-[#0f172a]/50 p-1 sm:p-2 rounded-lg sm:rounded-2xl border-2 sm:border-[3px] border-white/20 backdrop-blur-md overflow-x-auto max-w-[70vw] scrollbar-hide shadow-xl flex-1 justify-start md:justify-center">
+                            {EXERCISES.map((ex, i) => (
+                                <button key={ex.id} onClick={() => startExercise(i)} className={`w-7 h-7 sm:w-11 sm:h-11 rounded-md sm:rounded-[0.8rem] font-black text-xs sm:text-base transition-all shrink-0 ${exIdx === i ? 'bg-[#fde047] text-slate-900 scale-105 sm:scale-110 shadow-[0_0_10px_rgba(253,224,71,0.6)]' : 'text-white/80 hover:bg-white/20 hover:text-white'}`}>
+                                    {ex.id}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button onClick={toggleMute} className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-[#0f172a]/60 border-2 sm:border-[3px] border-white/30 backdrop-blur-md text-white hover:bg-[#0f172a]/80 transition-all shadow-lg active:scale-95 shrink-0">
+                            {isMuted ? <VolumeX className="w-4 h-4 sm:w-6 sm:h-6" /> : <Volume2 className="w-4 h-4 sm:w-6 sm:h-6" />}
+                        </button>
+                    </div>
+
+                    {/* Contenedor Pizarra Marfil */}
+                    <div className="flex-1 min-h-0 relative z-10 w-full max-w-7xl mx-auto bg-[#f8fafc] rounded-xl sm:rounded-[2.5rem] border-4 sm:border-[8px] border-white shadow-[0_15px_40px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden">
+                        
+                        {/* Cabecera Oscura y Elegante */}
+                        <div className="shrink-0 bg-[#0f172a] border-b-4 sm:border-b-[6px] border-[#4f46e5] px-2 py-2.5 sm:px-8 sm:py-6 flex flex-col md:flex-row items-center justify-between gap-2 sm:gap-5 z-20 shadow-md">
+                            
+                            <div className="flex flex-col items-center md:items-start gap-1 sm:gap-1.5 shrink-0 w-full md:w-auto">
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                    <span className="bg-[#fde047] text-slate-900 font-black text-[10px] sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 rounded sm:rounded-md uppercase tracking-widest shadow-sm shrink-0">
+                                        EJERCICIO {currentChallenge.id}
+                                    </span>
+                                    <span className="text-[#e2e8f0] font-extrabold text-[10px] sm:text-base bg-white/10 px-2 sm:px-3 py-0.5 sm:py-1 rounded sm:rounded-md border border-white/10 truncate">
+                                        {currentChallenge.subtitle}
+                                    </span>
+                                </div>
+                                <div className="flex gap-1 sm:gap-1.5 mt-0.5 sm:mt-1 bg-black/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-white/10">
+                                    {[0,1,2,3,4].map(i => (
+                                        <div key={i} className={`w-2 h-2 sm:w-4 sm:h-4 rounded-full border-[1.5px] border-white/20 transition-all duration-500 ${i < subIdx ? 'bg-[#10b981] scale-100 shadow-[0_0_5px_#10b981]' : i === subIdx ? 'bg-[#fde047] scale-125 animate-pulse shadow-[0_0_8px_#fde047]' : 'bg-transparent'}`}></div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-6 text-white font-black text-sm sm:text-2xl text-center w-full md:flex-1 max-w-full md:max-w-3xl overflow-hidden">
+                                <span className="leading-tight sm:leading-snug text-[#f1f5f9] break-words px-1">{currentLevel.enunciadoText}</span>
+                                <div className="math-enunciado shrink-0 bg-black/50 px-2 sm:px-6 py-1 sm:py-3 rounded-lg sm:rounded-2xl border-2 sm:border-[3px] border-white/20 shadow-inner overflow-x-auto max-w-full scrollbar-hide flex items-center justify-center min-w-[3rem]">
+                                    <MathDisplay latex={currentLevel.enunciadoLatex} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Área Interactiva Marfil con Cuadrícula */}
+                        <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-2 sm:p-8 relative bg-[#f8fafc] w-full overflow-y-auto scrollbar-hide">
+                            <div className="absolute inset-0 opacity-[0.12] bg-[radial-gradient(#64748b_2px,transparent_2px)] [background-size:20px_20px] sm:[background-size:28px_28px] pointer-events-none"></div>
+
+                            <div className="z-10 w-full flex flex-col items-center justify-center relative min-h-full">
+                                <VisualAid graphic={currentLevel.graphic} />
+                                <InteractiveArea level={currentLevel} answer={answer} setAnswer={setAnswer} status={status} />
+                            </div>
+                        </div>
+
+                        {/* Área Inferior: Robot y Botones */}
+                        <div className="shrink-0 bg-[#f1f5f9] w-full flex flex-col border-t-2 sm:border-t-[4px] border-slate-200 z-10 relative">
+                            
+                            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 p-2 sm:p-6 w-full">
+                                <div className="shrink-0 relative sm:absolute sm:-top-16 sm:left-6 z-20 drop-shadow-xl flex flex-row sm:flex-col items-center w-full sm:w-auto justify-center sm:justify-start">
+                                    <RobotAssistant status={status} isThinking={status === 'idle'} />
+                                    {/* Globo de Diálogo visible solo en móvil arriba, en desktop a la derecha */}
+                                    <div className="sm:hidden ml-3 flex-1 text-xs font-extrabold text-slate-700 bg-white p-2 rounded-xl border-2 border-[#cbd5e1] shadow-sm flex items-center h-full">
+                                        <div key={`m-speech-${exIdx}-${subIdx}-${status}`} className="animate-slideInRight w-full text-left">
+                                            {status === 'idle' && currentLevel.robotIdle}
+                                            {status === 'success' && <span className="text-[#047857]">{currentLevel.robotSuccess}</span>}
+                                            {status === 'error' && <span className="text-[#be123c]">{currentLevel.robotError}</span>}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Globo de Diálogo Desktop */}
+                                <div className="hidden sm:flex flex-1 text-xl font-extrabold text-slate-700 leading-relaxed bg-white p-6 rounded-2xl border-[3px] border-[#cbd5e1] shadow-sm items-center min-h-[5rem] ml-28 w-full">
+                                    <div key={`d-speech-${exIdx}-${subIdx}-${status}`} className="animate-slideInRight w-full text-left">
+                                        {status === 'idle' && currentLevel.robotIdle}
+                                        {status === 'success' && <span className="text-[#047857]">{currentLevel.robotSuccess}</span>}
+                                        {status === 'error' && <span className="text-[#be123c]">{currentLevel.robotError}</span>}
+                                    </div>
+                                </div>
+
+                                {/* Botón de Acción Principal */}
+                                <div className="shrink-0 w-full sm:w-auto mt-1 sm:mt-0 px-1 sm:px-0 pb-1 sm:pb-0">
+                                    {status !== 'success' ? (
+                                        <button onClick={checkAnswer} className="w-full sm:w-64 bg-gradient-to-r from-[#f59e0b] to-[#ea580c] text-white border-b-4 sm:border-b-[6px] border-[#c2410c] rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-4 font-black text-lg sm:text-2xl shadow-lg transition-all active:border-b-0 active:translate-y-[4px] sm:active:translate-y-[6px] hover:brightness-110 tracking-widest uppercase flex items-center justify-center gap-2">
+                                            ¡Comprobar!
+                                        </button>
+                                    ) : (
+                                        <button onClick={handleNext} className="w-full sm:w-64 bg-gradient-to-r from-[#10b981] to-[#047857] text-white border-b-4 sm:border-b-[6px] border-[#065f46] rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-4 font-black text-lg sm:text-2xl shadow-lg transition-all active:border-b-0 active:translate-y-[4px] sm:active:translate-y-[6px] hover:brightness-110 flex items-center justify-center gap-2 animate-pulse tracking-widest uppercase">
+                                            <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7" /> 
+                                            {subIdx < 4 ? "Siguiente" : "¡Superado!"}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
